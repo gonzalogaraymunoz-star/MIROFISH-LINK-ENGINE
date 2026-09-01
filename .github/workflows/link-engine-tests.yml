@@ -1,0 +1,31 @@
+name: LINK Engine checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  backend-auth:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.9.26"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install backend dependencies
+        working-directory: backend
+        run: uv sync --frozen --dev
+      - name: Compile LINK engine integration
+        working-directory: backend
+        run: uv run python -m py_compile app/__init__.py app/config.py
+      - name: Verify health and API token contract
+        working-directory: backend
+        run: uv run pytest tests/test_link_engine_auth.py -q
